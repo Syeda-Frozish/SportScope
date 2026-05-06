@@ -8,7 +8,7 @@
  * - More data to preserve in your database
  */
 
-const Match = require('../models/Match');
+const Match = require('../models/cricketMatch');
 
 /**
  * Save recently completed matches to database
