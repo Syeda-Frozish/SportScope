@@ -5,16 +5,19 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const matchRoutes = require('./routes/matchRoutes');
 const debugRoutes = require('./routes/debugRoutes');
+const playerRoutes = require('./routes/playerRoutes');
 
 dotenv.config();
+
 connectDB();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Main match routes
-app.use('/api/matches', matchRoutes);
+// Routes
+app.use('/api/matches', matchRoutes); // cricket matches; live, recent, upcoming
+app.use('/api/players', playerRoutes); // cricket players
 
 // Debug routes (optional - for development/troubleshooting)
 app.use('/api/debug', debugRoutes);
