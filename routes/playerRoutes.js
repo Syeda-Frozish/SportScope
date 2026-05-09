@@ -46,13 +46,17 @@ router.get('/', async (req, res) => {
     if (Object.keys(filter).length) and.push(filter);
 
     if (q) {
-      and.push({
-        $or: [
-          { 'name.first': { $regex: q, $options: 'i' } },
-          { 'name.last': { $regex: q, $options: 'i' } },
-          { 'name.full': { $regex: q, $options: 'i' } },
-        ],
-      });
+      const orConditions = [
+        { 'name.first': { $regex: q, $options: 'i' } },
+        { 'name.last': { $regex: q, $options: 'i' } },
+        { 'name.full': { $regex: q, $options: 'i' } },
+      ];
+      
+      if (!isNaN(q)) {
+        orConditions.push({ playerId: Number(q) });
+      }
+
+      and.push({ $or: orConditions });
     }
 
     const mongoFilter = and.length ? { $and: and } : {};
