@@ -52,7 +52,7 @@ router.get('/', async (req, res) => {
         { 'name.last': { $regex: q, $options: 'i' } },
         { 'name.full': { $regex: q, $options: 'i' } },
       ];
-      
+
       if (!isNaN(q)) {
         orConditions.push({ playerId: Number(q) });
       }
@@ -344,22 +344,22 @@ router.get('/bowlers', async (req, res) => {
 });
 
 /**
- * GET /api/players/elite
- * Fetch elite players defined in the f_players collection
+ * GET /api/players/featured
+ * Fetch featured players defined in the f_players collection
  */
-router.get('/elite', async (req, res) => {
+router.get('/featured', async (req, res) => {
   try {
     const fPlayers = await FPlayer.find({});
     const playerIds = fPlayers.map(fp => fp.playerId);
-    
+
     // Fetch matching players
     const players = await Player.find({ playerId: { $in: playerIds } }).select('-__v');
-    
+
     // Preserve the exact order from f_players
     const orderedPlayers = playerIds
       .map(id => players.find(p => p.playerId === id))
       .filter(Boolean);
-      
+
     res.json({ players: orderedPlayers });
   } catch (err) {
     res.status(500).json({ error: err.message });
