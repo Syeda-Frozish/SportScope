@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Player = require('../models/cricketPlayers');
+const FPlayer = require('../models/fPlayer');
 
 // ADD PLAYER
 router.post('/add', async (req, res) => {
@@ -337,6 +338,29 @@ router.get('/bowlers', async (req, res) => {
     ]);
 
     res.json({ count, page, limit, players });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/players/elite
+ * Fetch elite players defined in the f_players collection
+ */
+router.get('/elite', async (req, res) => {
+  try {
+    const fPlayers = await FPlayer.find({});
+    const playerIds = fPlayers.map(fp => fp.playerId);
+    
+    // Fetch matching players
+    const players = await Player.find({ playerId: { $in: playerIds } }).select('-__v');
+    
+    // Preserve the exact order from f_players
+    const orderedPlayers = playerIds
+      .map(id => players.find(p => p.playerId === id))
+      .filter(Boolean);
+      
+    res.json({ players: orderedPlayers });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
