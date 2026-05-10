@@ -23,7 +23,7 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(express.json());
-
+/*
 // Routes
 app.use('/api/matches', matchRoutes); // cricket matches; live, recent, upcoming
 app.use('/api/players', playerRoutes); // cricket players
@@ -38,7 +38,7 @@ app.use('/api/tennis/rankings', tennisRankings); // tennis rankings; singles, do
 // Debug routes (optional - for development/troubleshooting)
 app.use('/api/debug', debugRoutes);
 app.use('/api/tennis/debug', tennisDebugRoutes);
-
+*/
 
 app.get('/', (req, res) => {
   res.send('SportScope is running...');
