@@ -106,7 +106,7 @@ const getTournamentSeasons = async (type = 'atp', seasonId) => {
 
 const getTournamentPastChampions = async (type = 'atp', seasonId) => {
   try {
-    const res = await api.get(`/${type}/tournament/past-champions/${seasonId}`);
+    const res = await api.get(`/${type}/tournament/past-champtions/${seasonId}`);
     const data = res.data;
     const champions = data.data || data;
 

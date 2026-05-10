@@ -3,8 +3,7 @@ const TennisFixture = require('../models/tennisFixture');
 
 const getTodayFixtures = async (type = 'atp') => {
   try {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-    const res = await api.get(`/${type}/fixtures/${today}`);
+    const res = await api.get(`/${type}/fixtures`);
     const fixtures = Array.isArray(res.data) ? res.data : res.data.data || [];
 
 
@@ -99,7 +98,7 @@ const getFixturesByDate = async (type = 'atp', date) => {
 
 const getFixturesByDateRange = async (type = 'atp', startDate, endDate) => {
   try {
-    const res = await api.get(`/${type}/fixtures`, { params: { startDate, endDate } });
+    const res = await api.get(`/${type}/fixtures/${startDate}/${endDate}`);
 
     const fixtures = Array.isArray(res.data) ? res.data : res.data.data || [];
 
@@ -147,7 +146,7 @@ const getFixturesByDateRange = async (type = 'atp', startDate, endDate) => {
 
 const getFixturesByTournament = async (type = 'atp', tournamentId) => {
   try {
-    const res = await api.get(`/${type}/fixtures`, { params: { tournamentId } });
+    const res = await api.get(`/${type}/fixtures/tournament/${tournamentId}`);
 
     const fixtures = Array.isArray(res.data) ? res.data : res.data.data || [];
 
@@ -194,7 +193,7 @@ const getFixturesByTournament = async (type = 'atp', tournamentId) => {
 
 const getFixturesByPlayer = async (type = 'atp', playerId) => {
   try {
-    const res = await api.get(`/${type}/fixtures`, { params: { playerId } });
+    const res = await api.get(`/${type}/fixtures/player/${playerId}`);
     const fixtures = Array.isArray(res.data) ? res.data : res.data.data || [];
 
 

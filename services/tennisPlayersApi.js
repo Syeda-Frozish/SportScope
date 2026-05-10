@@ -262,17 +262,53 @@ const searchPlayers = async (query = '', type = 'atp', limit = 20) => {
   const q = (query || '').trim();
   if (!q) return [];
 
-  // DB-backed search fallback (works even without the RapidAPI search endpoint).
-  const regex = new RegExp(q.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&'), 'i');
+  const regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
 
-  const results = await TennisPlayer.find({ type, name: { $regex: regex } })
+  // 1. Search in explicitly saved players
+  const playerResultsRaw = await TennisPlayer.find({ type, name: { $regex: regex } })
     .limit(limit)
     .select({ playerId: 1, name: 1, countryAcr: 1, currentRank: 1, points: 1 })
-    .sort({ currentRank: 1 });
+    .sort({ currentRank: 1 })
+    .lean();
 
-  return results;
+  const playerResults = playerResultsRaw.map(p => ({
+    ...p,
+    id: p.playerId
+  }));
+
+  // 2. Search within the Rankings data if we don't have enough results
+  let rankingResults = [];
+  if (playerResults.length < limit) {
+    const TennisRanking = require('../models/tennisRanking');
+    const rankingDoc = await TennisRanking.findOne({ type, category: 'singles' }).sort({ snapshotDate: -1 });
+    
+    if (rankingDoc && Array.isArray(rankingDoc.data)) {
+      const filtered = rankingDoc.data.filter(item => item.player && regex.test(item.player.name));
+      rankingResults = filtered.map(item => ({
+        id: item.player.id,
+        playerId: item.player.id,
+        name: item.player.name,
+        countryAcr: item.player.countryAcr || item.player.country?.acronym,
+        currentRank: item.position || item.rank,
+        points: item.pts || item.points || item.point
+      }));
+    }
+  }
+
+  // Merge and deduplicate
+  const merged = [...playerResults, ...rankingResults];
+  const uniquePlayers = [];
+  const seenIds = new Set();
+  
+  for (const p of merged) {
+    if (!seenIds.has(p.playerId)) {
+      seenIds.add(p.playerId);
+      uniquePlayers.push(p);
+    }
+  }
+
+  return uniquePlayers.slice(0, limit);
 };
-
 
 module.exports = {
   getPlayerProfile,
