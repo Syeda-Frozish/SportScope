@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 
 const connectDB = require('./config/db');
+const { initRedis } = require('./config/redis');
 const matchRoutes = require('./routes/matchRoutes');
 const debugRoutes = require('./routes/debugRoutes');
 const tennisDebugRoutes = require('./routes/tennisDebugRoutes');
@@ -15,10 +16,12 @@ const tennisFixtures = require('./routes/tennisFixturesRoutes');
 const tennisPlayers = require('./routes/tennisPlayersRoutes');
 const tennisTournaments = require('./routes/tennisTournamentsRoutes');
 const tennisRankings = require('./routes/tennisRankingsRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 dotenv.config();
 
 connectDB();
+initRedis();
 
 const app = express();
 app.use(cors());
@@ -28,6 +31,7 @@ app.use(express.json());
 app.use('/api/matches', matchRoutes); // cricket matches; live, recent, upcoming
 app.use('/api/players', playerRoutes); // cricket players
 app.use('/api/series', seriesRoutes); // cricket series; upcoming + details
+app.use('/api/analytics', analyticsRoutes); // analytics and aggregation endpoints
 
 // Tennis routes
 app.use('/api/tennis/fixtures', tennisFixtures); // tennis fixtures; today, date, range, tournament, player

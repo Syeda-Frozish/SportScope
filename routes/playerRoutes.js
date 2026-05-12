@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 
 const Player = require('../models/cricketPlayers');
@@ -12,6 +13,45 @@ router.post('/add', async (req, res) => {
     res.status(201).json(player);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ADD or UPDATE player using a transaction
+router.post('/transaction/upsert', async (req, res) => {
+  const { player, featured } = req.body;
+
+  if (!player || typeof player.playerId !== 'number') {
+    return res.status(400).json({ error: 'player must be provided and include a numeric playerId' });
+  }
+
+  const session = await mongoose.startSession();
+
+  try {
+    await session.withTransaction(async () => {
+      await Player.updateOne(
+        { playerId: player.playerId },
+        { $set: { ...player, lastUpdated: new Date() } },
+        { upsert: true, session }
+      );
+
+      if (featured) {
+        await FPlayer.updateOne(
+          { playerId: player.playerId },
+          { $set: { playerId: player.playerId } },
+          { upsert: true, session }
+        );
+      } else {
+        await FPlayer.deleteOne({ playerId: player.playerId }, { session });
+      }
+    });
+
+    const updatedPlayer = await Player.findOne({ playerId: player.playerId }).select('-__v');
+    res.status(200).json({ success: true, player: updatedPlayer });
+  } catch (err) {
+    console.error('Error in transaction upsert player:', err);
+    res.status(500).json({ error: err.message || 'Failed to upsert player in transaction' });
+  } finally {
+    session.endSession();
   }
 });
 

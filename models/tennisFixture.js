@@ -76,4 +76,11 @@ const tennisFixtureSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+
+tennisFixtureSchema.index({ type: 1, date: -1 });
+tennisFixtureSchema.index({ player1Id: 1 });
+tennisFixtureSchema.index({ player2Id: 1 });
+tennisFixtureSchema.index({ tournamentId: 1 });
+tennisFixtureSchema.index({ source: 1 });
+
 module.exports = mongoose.model('TennisFixture', tennisFixtureSchema);

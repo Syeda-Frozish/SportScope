@@ -9,18 +9,27 @@ const {
   getFixturesByPlayer,
   getFixturesFromDB,
 } = require('../services/tennisFixturesApi');
+const { getCache, setCache } = require('../utils/cacheClient');
 
 // Today's fixtures
 router.get('/today', async (req, res) => {
   try {
     const type = req.query.type || 'atp';
+    const cacheKey = `tennis_fixtures_today:${type}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const fixtures = await getTodayFixtures(type);
-    res.json({
+    const response = {
       success: true,
       type,
       count: fixtures.length,
       fixtures,
-    });
+    };
+    await setCache(cacheKey, response, 5 * 60 * 1000);
+    res.json(response);
   } catch (err) {
     console.error('Error fetching today fixtures:', err);
     res.status(500).json({
@@ -34,14 +43,22 @@ router.get('/date/:date', async (req, res) => {
   try {
     const { date } = req.params;
     const type = req.query.type || 'atp';
+    const cacheKey = `tennis_fixtures_date:${type}:${date}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const fixtures = await getFixturesByDate(type, date);
-    res.json({
+    const response = {
       success: true,
       type,
       date,
       count: fixtures.length,
       fixtures,
-    });
+    };
+    await setCache(cacheKey, response, 5 * 60 * 1000);
+    res.json(response);
   } catch (err) {
     console.error('Error fetching fixtures by date:', err);
     res.status(500).json({
@@ -54,20 +71,27 @@ router.get('/date/:date', async (req, res) => {
 router.get('/range', async (req, res) => {
   try {
     const { start, end, type = 'atp' } = req.query;
+    const cacheKey = `tennis_fixtures_range:${type}:${start}:${end}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
     if (!start || !end) {
       return res.status(400).json({
         error: 'start and end query parameters are required',
       });
     }
     const fixtures = await getFixturesByDateRange(type, start, end);
-    res.json({
+    const response = {
       success: true,
       type,
       startDate: start,
       endDate: end,
       count: fixtures.length,
       fixtures,
-    });
+    };
+    await setCache(cacheKey, response, 10 * 60 * 1000);
+    res.json(response);
   } catch (err) {
     console.error('Error fetching fixtures by date range:', err);
     res.status(500).json({
@@ -81,14 +105,22 @@ router.get('/tournament/:tournamentId', async (req, res) => {
   try {
     const { tournamentId } = req.params;
     const type = req.query.type || 'atp';
+    const cacheKey = `tennis_fixtures_tournament:${type}:${tournamentId}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const fixtures = await getFixturesByTournament(type, tournamentId);
-    res.json({
+    const response = {
       success: true,
       type,
       tournamentId,
       count: fixtures.length,
       fixtures,
-    });
+    };
+    await setCache(cacheKey, response, 10 * 60 * 1000);
+    res.json(response);
   } catch (err) {
     console.error('Error fetching fixtures by tournament:', err);
     res.status(500).json({
@@ -102,14 +134,22 @@ router.get('/player/:playerId', async (req, res) => {
   try {
     const { playerId } = req.params;
     const type = req.query.type || 'atp';
+    const cacheKey = `tennis_fixtures_player:${type}:${playerId}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const fixtures = await getFixturesByPlayer(type, playerId);
-    res.json({
+    const response = {
       success: true,
       type,
       playerId,
       count: fixtures.length,
       fixtures,
-    });
+    };
+    await setCache(cacheKey, response, 10 * 60 * 1000);
+    res.json(response);
   } catch (err) {
     console.error('Error fetching fixtures by player:', err);
     res.status(500).json({
@@ -145,13 +185,21 @@ router.get('/db/completed', async (req, res) => {
       if (req.query.end) query.date.$lte = new Date(req.query.end);
     }
 
+    const cacheKey = `tennis_fixtures_db_completed:${JSON.stringify(query)}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const fixtures = await getFixturesFromDB(query);
-    res.json({
+    const response = {
       success: true,
       query,
       count: fixtures.length,
       fixtures,
-    });
+    };
+    await setCache(cacheKey, response, 30 * 60 * 1000);
+    res.json(response);
   } catch (err) {
     console.error('Error fetching completed fixtures from DB:', err);
     res.status(500).json({
@@ -176,13 +224,21 @@ router.get('/db', async (req, res) => {
       if (req.query.end) query.date.$lte = new Date(req.query.end);
     }
 
+    const cacheKey = `tennis_fixtures_db:${JSON.stringify(query)}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const fixtures = await getFixturesFromDB(query);
-    res.json({
+    const response = {
       success: true,
       query,
       count: fixtures.length,
       fixtures,
-    });
+    };
+    await setCache(cacheKey, response, 30 * 60 * 1000);
+    res.json(response);
   } catch (err) {
     console.error('Error fetching fixtures from DB:', err);
     res.status(500).json({

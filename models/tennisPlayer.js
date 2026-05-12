@@ -163,4 +163,9 @@ const tennisPlayerSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+tennisPlayerSchema.index({ playerId: 1, type: 1 });
+tennisPlayerSchema.index({ name: 1 });
+tennisPlayerSchema.index({ currentRank: 1 });
+tennisPlayerSchema.index({ countryAcr: 1 });
+
 module.exports = mongoose.model('TennisPlayer', tennisPlayerSchema);

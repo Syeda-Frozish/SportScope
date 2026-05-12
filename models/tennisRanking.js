@@ -57,4 +57,6 @@ const tennisRankingSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+tennisRankingSchema.index({ type: 1, category: 1, snapshotDate: -1 });
+
 module.exports = mongoose.model('TennisRanking', tennisRankingSchema);

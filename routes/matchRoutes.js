@@ -7,7 +7,7 @@ const formatMatch = require('../utils/formatMatch');
 const formatUpcomingMatch = require('../utils/formatUpcomingMatch');
 const filterMatches = require('../utils/filterMatches');
 const Match = require('../models/cricketMatch');
-const { setCache, getCache } = require('../utils/cache');
+const { getCache, setCache } = require('../utils/cacheClient');
 
 
 // Live matches (cache for 30 seconds)
@@ -15,7 +15,7 @@ router.get('/live', async (req, res) => {
   try {
     const filterMode = req.query.filter === 'all' ? null : filterMatches;
     const cacheKey = `live_${req.query.filter || 'major'}`;
-    const cached = getCache(cacheKey);
+    const cached = await getCache(cacheKey);
     if (cached) {
       return res.json(cached);
     }
@@ -23,7 +23,7 @@ router.get('/live', async (req, res) => {
     const matches = await getCurrentMatches();
     if (!matches || matches.length === 0) {
       const response = { count: 0, filter: req.query.filter || 'major', matches: [] };
-      setCache(cacheKey, response, 30 * 1000);
+      await setCache(cacheKey, response, 30 * 1000);
       return res.json(response);
     }
 
@@ -39,7 +39,7 @@ router.get('/live', async (req, res) => {
       filter: req.query.filter || 'major',
       matches: liveMatches,
     };
-    setCache(cacheKey, response, 30 * 1000); // 30 seconds
+    await setCache(cacheKey, response, 30 * 1000); // 30 seconds
     res.json(response);
   } catch (err) {
     console.error('Error fetching live matches:', err);
@@ -54,6 +54,11 @@ router.get('/live', async (req, res) => {
 router.get('/recent', async (req, res) => {
   try {
     const filterMode = req.query.filter === 'all' ? null : filterMatches;
+    const cacheKey = `recent_${req.query.filter || 'major'}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
     
     const matches = await getCurrentMatches();
 
@@ -74,11 +79,13 @@ router.get('/recent', async (req, res) => {
       match => match.matchEnded === true
     );
 
-    res.json({
+    const response = {
       count: recentMatches.length,
       filter: req.query.filter || 'major',
       matches: recentMatches,
-    });
+    };
+    await setCache(cacheKey, response, 30 * 1000);
+    res.json(response);
   } catch (err) {
     console.error('Error fetching recent matches:', err);
     res.status(500).json({
@@ -93,7 +100,7 @@ router.get('/upcoming', async (req, res) => {
   try {
     const filterMode = req.query.filter === 'all' ? null : filterMatches;
     const cacheKey = `upcoming_${req.query.filter || 'major'}`;
-    const cached = getCache(cacheKey);
+    const cached = await getCache(cacheKey);
     if (cached) {
       return res.json(cached);
     }
@@ -101,7 +108,7 @@ router.get('/upcoming', async (req, res) => {
     const matches = await getUpcomingMatches();
     if (!matches || matches.length === 0) {
       const response = { count: 0, filter: req.query.filter || 'major', matches: [] };
-      setCache(cacheKey, response, 5 * 60 * 1000);
+      await setCache(cacheKey, response, 5 * 60 * 1000);
       return res.json(response);
     }
 
@@ -119,7 +126,7 @@ router.get('/upcoming', async (req, res) => {
       filter: req.query.filter || 'major',
       matches: upcomingMatches,
     };
-    setCache(cacheKey, response, 5 * 60 * 1000); // 5 minutes
+    await setCache(cacheKey, response, 5 * 60 * 1000); // 5 minutes
     res.json(response);
   } catch (err) {
     console.error('Error fetching upcoming matches:', err);
@@ -172,13 +179,21 @@ router.post('/save-recent', async (req, res) => {
 // Get database stats
 router.get('/stats', async (req, res) => {
   try {
+    const cacheKey = 'cricket_stats';
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const { getStats } = require('../utils/storeMatches');
     const stats = await getStats();
     
-    res.json({
+    const response = {
       success: true,
       ...stats,
-    });
+    };
+    await setCache(cacheKey, response, 60 * 1000);
+    res.json(response);
   } catch (err) {
     console.error('Error fetching stats:', err);
     res.status(500).json({
@@ -212,12 +227,20 @@ router.delete('/cleanup', async (req, res) => {
 // Get saved matches from database
 router.get('/saved', async (req, res) => {
   try {
+    const cacheKey = 'saved_matches';
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const savedMatches = await Match.find().sort({ date: -1 });
     
-    res.json({
+    const response = {
       count: savedMatches.length,
       matches: savedMatches,
-    });
+    };
+    await setCache(cacheKey, response, 5 * 60 * 1000);
+    res.json(response);
   } catch (err) {
     console.error('Error fetching saved matches:', err);
     res.status(500).json({

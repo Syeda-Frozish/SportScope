@@ -82,6 +82,13 @@ const playerSchema = new mongoose.Schema(
   }
 );
 
+playerSchema.index({ 'name.full': 1 });
+playerSchema.index({ 'country.id': 1 });
+playerSchema.index({ 'country.continent': 1 });
+playerSchema.index({ position: 1 });
+playerSchema.index({ battingStyle: 1 });
+playerSchema.index({ bowlingStyle: 1 });
+
 const Player = mongoose.model("Player", playerSchema);
 
 module.exports = Player;

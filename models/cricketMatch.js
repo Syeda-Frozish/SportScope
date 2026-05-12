@@ -69,4 +69,9 @@ const matchSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+matchSchema.index({ date: -1 });
+matchSchema.index({ 'teamA.name': 1 });
+matchSchema.index({ 'teamB.name': 1 });
+matchSchema.index({ matchStarted: 1 });
+
 module.exports = mongoose.model('Match', matchSchema);
